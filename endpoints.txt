@@ -1,0 +1,715 @@
+Documento de Arquitectura de Software
+Proyecto: Sistema de Acreditación de Alta Calidad - UPTC​
+Versión 1.0
+Tabla de Contenidos
+
+1. Introducción
+Este documento define la arquitectura tecnológica para el proceso de Acreditación de Alta
+Calidad de la UPTC, asegurando el cumplimiento de los estándares institucionales.
+
+2. Vista de la Arquitectura
+A continuación se describe la estructura lógica del sistema:
+[ESPACIO PARA INSERTAR DIAGRAMA DE ARQUITECTURA]
+
+3. Modelo de Datos
+3.1 Modelo Entidad-Relación (MER)
+El modelo de datos está normalizado para soportar la trazabilidad de los indicadores de
+acreditación.
+[ESPACIO PARA IMAGEN DEL MODELO ENTIDAD-RELACIÓN]
+
+4. Infraestructura y Servidores
+Distribución de la carga de trabajo:
+Servidor
+SRV-APP-UPTC
+SRV-DB-UPTC
+SRV-WEB-UPTC
+
+Rol / Función
+Backend & API
+(Node.js/Java)
+Base de Datos (PostgreSQL)
+Frontend (React/Angular)
+
+Entorno
+Producción
+Producción
+Producción
+
+5. Stack Tecnológico Transversal
+5.1 Middleware
+Sistema utilizado:
+
+5.2 Gestión de Identidad (IAM)
+Sistema utilizado: Keycloak integrado con el LDAP institucional de la UPTC.
+
+5.3 Sistema de Monitoreo
+Herramientas: Kafka
+
+Registro de modificaciones.
+Responsable
+Firma
+Versión
+Fecha
+
+Jorge Armando Pérez Abril
+001
+
+DESCRIPCIÓN DE LOS SERVICIOS
+
+1.​ Login
+Path
+
+Cliente 1
+
+192.168.1.2:5000/patient
+
+Cliente 2
+
+192.168.1.2:6000/patient
+
+Cliente 3
+
+192.168.1.2:7000/patient
+
+Método
+
+POST
+
+Parámetros
+
+Body {
+username: string,
+password: string
+}
+
+Retorno
+
+Body {
+token: string
+}
+
+2.​ Servicio para listar todos los pacientes
+Path
+
+Método
+
+Cliente 1
+
+192.168.1.2:5000/patient
+
+Cliente 2
+
+192.168.1.2:6000/patient
+
+Cliente 3
+
+192.168.1.2:7000/patient
+
+GET
+
+Parámetros
+Retorno
+
+Body [ {
+patientId: string,
+firstName: string,
+lastName: string,
+dateOfBirth: timestamp,
+Room: {
+idRoom: string,
+floor: int,
+roomNumber: string,
+roomPavilion: string
+},
+
+Allergies: [
+{
+medicalId: string,
+name: string,
+diagnostics: string,
+allergenType: string
+}
+],
+Diseases: [
+{
+medicalId: string,
+name: string,
+diagnostics: string,
+isContagious: boolean,
+transmissionRoute: string
+}
+],
+emergencyContact: {
+idContact: string,
+firstName: string,
+lastName: string,
+phone: string,
+mail: string,
+relationship: string
+},
+wearableDevices : [
+{
+wearableId: string,
+macAddress: string,
+batteryLevel: int,
+isActive: boolean
+}
+]
+} ]
+
+3.​ Servicio para listar un paciente por medio del ID
+Path
+
+Cliente 1
+
+192.168.1.2:5000/patient/{patient_id}
+
+Cliente 2
+
+192.168.1.2:6000/patient/{patient_id}
+
+Cliente 3
+Método
+
+192.168.1.2:7000/patient/{patient_id}
+
+GET
+
+Parámetros
+Retorno
+
+Body {
+patientId: string,
+firstName: string,
+lastName: string,
+dateOfBirth: timestamp,
+Room: {
+idRoom: string,
+floor: int,
+roomNumber: string,
+roomPavilion: string
+},
+Allergies: [
+{
+medicalId: string,
+name: string,
+diagnostics: string,
+allergenType: string
+}
+],
+Diseases: [
+{
+medicalId: string,
+name: string,
+diagnostics: string,
+isContagious: boolean,
+transmissionRoute: string
+}
+],
+emergencyContact: {
+idContact: string,
+firstName: string,
+lastName: string,
+phone: string,
+mail: string,
+relationship: string
+},
+wearableDevices : [
+
+{
+wearableId: string,
+macAddress: string,
+batteryLevel: int,
+isActive: boolean
+}
+]
+}
+
+4.​ Servicio para crear un paciente
+5.​
+Path
+
+Cliente 1
+
+192.168.1.2:5000/patient/
+
+Cliente 2
+
+192.168.1.2:6000/patient/
+
+Cliente 3
+
+192.168.1.2:7000/patient/
+
+Método
+
+POST
+
+Parámetros
+
+Body {
+firstName: string,
+lastName: string,
+dateOfBirth: timestamp,
+RoomId: string ,
+Allergies: [
+{
+name: string,
+diagnostics: string,
+allergenType: string
+}
+],
+Diseases: [
+{
+name: string,
+diagnostics: string,
+isContagious: boolean,
+transmissionRoute: string
+}
+],
+
+emergencyContact: {
+firstName: string,
+lastName: string,
+phone: string,
+mail: string,
+relationship: string
+},
+wearableDevices : [
+{
+wearableId: string,
+}
+]
+}
+Retorno
+
+Body {
+status: int,
+message: string
+}
+
+6.​ Servicio para editar un paciente
+Path
+
+Cliente 1
+
+192.168.1.2:5000/patient/{patientId}
+
+Cliente 2
+
+192.168.1.2:6000/patient/{patientId}
+
+Cliente 3
+
+192.168.1.2:7000/patient/{patientId}
+
+Método
+
+PUT
+
+Parámetros
+
+Body {
+firstName: string,
+lastName: string,
+dateOfBirth: timestamp,
+RoomId: string ,
+Allergies: [
+{
+name: string,
+diagnostics: string,
+allergenType: string
+
+}
+],
+Diseases: [
+{
+name: string,
+diagnostics: string,
+isContagious: boolean,
+transmissionRoute: string
+}
+],
+emergencyContact: {
+firstName: string,
+lastName: string,
+phone: string,
+mail: string,
+relationship: string
+},
+wearableDevices : [
+{
+wearableId: string,
+}
+]
+}
+Retorno
+
+Body {
+status: int,
+message: string
+}
+
+7.​ Servicio para eliminar un paciente
+8.​
+Path
+
+Método
+
+Cliente 1
+
+192.168.1.2:5000/patient/{patientId}
+
+Cliente 2
+
+192.168.1.2:6000/patient/{patientId}
+
+Cliente 3
+
+192.168.1.2:7000/patient/{patientId}
+
+DELETE
+
+Parámetros
+Retorno
+
+Body {
+status: int,
+message: string
+}
+
+9.​ Servicio para crear una alerta
+Path
+
+Cliente 1
+
+92.168.1.9:5000/alert
+
+Cliente 2
+
+92.168.1.9:6000/alert
+
+Cliente 3
+
+92.168.1.9:7000/alert
+
+Método
+
+POST
+
+Parámetros
+
+Body {
+patientId: string,
+wearableId: string,
+alertType: string,
+alertLevel: string,
+alertStatus: string​
+}
+
+Retorno
+
+Body {
+alert_id: string,
+createdAt: timestamp,
+Message: string​
+}
+
+10.​Servicio para listar todas las alertas
+
+Path
+
+Método
+Parámetros
+
+Cliente 1
+
+92.168.1.9:5000/alert
+
+Cliente 2
+
+92.168.1.9:6000/alert
+
+Cliente 3
+
+92.168.1.9:7000/alert
+
+GET
+
+Retorno
+
+Body [
+{
+alertId: string,
+patientId: string,
+wearableId: string,
+alertStatus: string,
+alertLevel: string,
+alertType: string,
+nurseId: string,
+createdAt: timestamp,
+resolvedAt: timestamp
+}​
+]
+
+11.​Servicio para listar una alerta por ID
+
+Path
+
+Método
+
+Cliente 1
+
+92.168.1.9:5000/alert/{alert_id}
+
+Cliente 2
+
+92.168.1.9:6000/alert/{alert_id}
+
+Cliente 3
+
+92.168.1.9:7000/alert/{alert_id}
+
+GET
+
+Parámetros
+Retorno
+
+Body {
+alertId: string,
+patientId: string,
+wearableId: string,
+alertStatus: string,
+alertLevel: string,
+alertType: string,
+nurseId: string (FK),
+createdAt: timestamp,
+resolvedAt: timestamp (o null)
+​
+}
+
+12.​Servicio para editar una alerta
+
+Path
+
+Cliente 1
+
+92.168.1.9:5000/alert/{alert_id}
+
+Cliente 2
+
+92.168.1.9:6000/alert/{alert_id}
+
+Cliente 3
+
+92.168.1.9:7000/alert/{alert_id}
+
+Método
+
+PUT
+
+Parámetros
+
+Body {
+alertStatus: string,
+alertLevel: string,
+nurseId: string (FK),
+resolvedAt: timestamp
+}
+
+Retorno
+
+Body {
+alertId: string,
+Message: “Alerta actualizada”
+​
+}
+
+13.​Servicio para eliminar una alerta
+
+Path
+
+Método
+
+Cliente 1
+
+92.168.1.9:5000/alert/{alert_id}
+
+Cliente 2
+
+92.168.1.9:6000/alert/{alert_id}
+
+Cliente 3
+
+92.168.1.9:7000/alert/{alert_id}
+
+DELETE
+
+Parámetros
+Retorno
+
+Body {
+Message: string​
+}
+
+14.​Servicio para crear dispositivo IoT
+
+Path
+
+Cliente 1
+
+192.168.1.2:5000/device
+
+Cliente 2
+
+192.168.1.2:6000/device
+
+Cliente 3
+
+192.168.1.2:7000/device
+
+Método
+
+POST
+
+Parámetros
+
+Body {
+macAddress: string,
+batteryLevel: integer,
+isActive: boolean​
+}
+
+Retorno
+
+Body {
+wearableId: string,
+Message: “Dispositivo registrado
+exitosamente"​
+}
+
+15.​Servicio para listar todos los dispositivos IoT
+
+Path
+
+Método
+
+Cliente 1
+
+192.168.1.2:5000/device
+
+Cliente 2
+
+192.168.1.2:6000/device
+
+Cliente 3
+
+192.168.1.2:7000/device
+
+GET
+
+Parámetros
+Retorno
+
+Body [
+{
+macAddress: string,
+batteryLevel: integer,
+isActive: boolean
+},​
+]
+
+16.​Servicio para listar dispositivo IoT por ID
+
+Path
+
+Método
+
+Cliente 1
+
+192.168.1.2:5000/device/{device_id}
+
+Cliente 2
+
+192.168.1.2:6000/device/{device_id}
+
+Cliente 3
+
+192.168.1.2:7000/device/{device_id}
+
+GET
+
+Parámetros
+Retorno
+
+Body {
+macAddress: string,
+batteryLevel: integer,
+isActive: boolean​
+}
+
+17.​Servicio para editar un dispositivo IoT
+
+Path
+
+Cliente 1
+
+192.168.1.2:5000/device/{device_id}
+
+Cliente 2
+
+192.168.1.2:6000/device/{device_id}
+
+Cliente 3
+
+192.168.1.2:7000/device/{device_id}
+
+Método
+
+PUT
+
+Parámetros
+
+Body {
+macAddress: string,
+batteryLevel: integer,
+isActive: boolean​
+}
+
+Retorno
+
+Body {
+wearableId: string,
+Message: “Información del dispositivo
+actualizada"​
+}
+
+18.​Servicio para eliminar un dispositivo IoT
+
+Path
+
+Método
+
+Cliente 1
+
+192.168.1.2:5000/device/{device_id}
+
+Cliente 2
+
+192.168.1.2:6000/device/{device_id}
+
+Cliente 3
+
+192.168.1.2:7000/device/{device_id}
+
+DELETE
+
+Parámetros
+Retorno
+
+Body {
+Message: “Dispositivo eliminado
+exitosamente"​
+}
+
+
