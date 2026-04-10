@@ -56,7 +56,7 @@ func (h *PatientHandler) Create(w http.ResponseWriter, r *http.Request) {
 func (h *PatientHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	patients, err := h.patientUseCase.GetAllPatients(r.Context())
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -84,7 +84,11 @@ func (h *PatientHandler) Update(w http.ResponseWriter, r *http.Request) {
 	patient.ID = id
 	err := h.patientUseCase.UpdatePatient(r.Context(), &patient)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		if err.Error() == "paciente no encontrado" {
+			http.Error(w, err.Error(), http.StatusNotFound)
+		} else {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
 		return
 	}
 
@@ -99,7 +103,11 @@ func (h *PatientHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	err := h.patientUseCase.DeletePatient(r.Context(), id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		if err.Error() == "paciente no encontrado" {
+			http.Error(w, err.Error(), http.StatusNotFound)
+		} else {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
 		return
 	}
 

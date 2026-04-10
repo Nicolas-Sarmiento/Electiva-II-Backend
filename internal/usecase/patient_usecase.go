@@ -45,13 +45,29 @@ func (u *patientUseCase) CreatePatient(ctx context.Context, patient *domain.Pati
 		}
 	}
 
+	// 1.8 Validar que los wearables no estén ya asignados a otro paciente
+	if err := u.validateWearablesUniqueness(ctx, "", patient.WearableDevices); err != nil {
+		return err
+	}
+
 	// 2. Asignar ID si viene vacío (UUID)
 	if patient.ID == "" {
 		patient.ID = uuid.New().String()
 	}
 
-	if patient.EmergencyContact.ID == "" {
+	if patient.EmergencyContact != nil && patient.EmergencyContact.ID == "" {
 		patient.EmergencyContact.ID = uuid.New().String()
+	}
+
+	for i := range patient.Allergies {
+		if patient.Allergies[i].ID == "" {
+			patient.Allergies[i].ID = uuid.New().String()
+		}
+	}
+	for i := range patient.Diseases {
+		if patient.Diseases[i].ID == "" {
+			patient.Diseases[i].ID = uuid.New().String()
+		}
 	}
 
 	// 3. Guardar usando Repositorio
@@ -73,6 +89,11 @@ func (u *patientUseCase) GetAllPatients(ctx context.Context) ([]domain.Patient, 
 }
 
 func (u *patientUseCase) UpdatePatient(ctx context.Context, patient *domain.Patient) error {
+	// Validar que la habitación asignada existe en la BD
+	if _, err := u.roomRepo.GetByID(ctx, patient.RoomID); err != nil {
+		return errors.New("la habitación con ID '" + patient.RoomID + "' no existe")
+	}
+
 	// First check if the patient exists
 	_, err := u.patientRepo.GetByID(ctx, patient.ID)
 	if err != nil {
@@ -86,6 +107,26 @@ func (u *patientUseCase) UpdatePatient(ctx context.Context, patient *domain.Pati
 		}
 	}
 
+	// Validar que los wearables no estén asignados a otro paciente
+	if err := u.validateWearablesUniqueness(ctx, patient.ID, patient.WearableDevices); err != nil {
+		return err
+	}
+
+	if patient.EmergencyContact != nil && patient.EmergencyContact.ID == "" {
+		patient.EmergencyContact.ID = uuid.New().String()
+	}
+
+	for i := range patient.Allergies {
+		if patient.Allergies[i].ID == "" {
+			patient.Allergies[i].ID = uuid.New().String()
+		}
+	}
+	for i := range patient.Diseases {
+		if patient.Diseases[i].ID == "" {
+			patient.Diseases[i].ID = uuid.New().String()
+		}
+	}
+
 	return u.patientRepo.Update(ctx, patient)
 }
 
@@ -96,4 +137,27 @@ func (u *patientUseCase) DeletePatient(ctx context.Context, id string) error {
 	}
 
 	return u.patientRepo.Delete(ctx, id)
+}
+
+func (u *patientUseCase) validateWearablesUniqueness(ctx context.Context, patientID string, newWearables []domain.Wearable) error {
+	if len(newWearables) == 0 {
+		return nil
+	}
+	allPatients, err := u.patientRepo.GetAll(ctx)
+	if err != nil {
+		return err
+	}
+	for _, p := range allPatients {
+		if p.ID == patientID {
+			continue // Ignorar al paciente actual si es una actualización
+		}
+		for _, w := range p.WearableDevices {
+			for _, newW := range newWearables {
+				if w.ID == newW.ID {
+					return errors.New("el wearable con ID '" + w.ID + "' ya se encuentra asignado al paciente " + p.FirstName + " " + p.LastName)
+				}
+			}
+		}
+	}
+	return nil
 }

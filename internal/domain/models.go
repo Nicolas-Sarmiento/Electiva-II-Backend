@@ -9,9 +9,9 @@ type MedicalCondition struct {
 	ID                string `gorm:"primaryKey;type:varchar(50)" json:"medicalId"`
 	Name              string `gorm:"type:varchar(50)" json:"name" validate:"required,min=3"`
 	Diagnostic        string `gorm:"type:text" json:"diagnostics" validate:"required"` // Cambiado a string para mapear facil en json
-	AllergenType      string `gorm:"type:varchar(50)" json:"allergenType,omitempty"`
-	IsContagious      *bool  `json:"isContagious,omitempty"`
-	TransmissionRoute string `gorm:"type:varchar(50)" json:"transmissionRoute,omitempty"`
+	AllergenType      string `gorm:"type:varchar(50)" json:"allergenType"`
+	IsContagious      *bool  `json:"isContagious"`
+	TransmissionRoute string `gorm:"type:varchar(50)" json:"transmissionRoute"`
 }
 
 // EmergencyContact - Contacto de emergencia
@@ -83,8 +83,8 @@ type Patient struct {
 	PatientWearables  []PatientWearable  `gorm:"foreignKey:PatientID" json:"-"`
 
 	// Para coincidir con el payload exacto esperado (estos campos pueden poblarse manualmente)
-	Allergies        []MedicalCondition `gorm:"-" json:"Allergies,omitempty"`
-	Diseases         []MedicalCondition `gorm:"-" json:"Diseases,omitempty"`
+	Allergies        []MedicalCondition `gorm:"-" json:"Allergies"`
+	Diseases         []MedicalCondition `gorm:"-" json:"Diseases"`
 	EmergencyContact *EmergencyContact  `gorm:"-" json:"emergencyContact,omitempty"`
 	WearableDevices  []Wearable         `gorm:"-" json:"wearableDevices,omitempty"`
 }

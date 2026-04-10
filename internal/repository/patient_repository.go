@@ -36,6 +36,49 @@ func (r *patientRepository) Create(ctx context.Context, patient *domain.Patient)
 			}
 		}
 
+		// Insert Medical Conditions
+		for _, a := range patient.Allergies {
+			if err := tx.Save(&a).Error; err != nil {
+				return err
+			}
+			pc := domain.PatientCondition{
+				PatientID:   patient.ID,
+				ConditionID: a.ID,
+				Diagnostic:  a.Diagnostic,
+			}
+			if err := tx.Create(&pc).Error; err != nil {
+				return err
+			}
+		}
+		for _, d := range patient.Diseases {
+			if err := tx.Save(&d).Error; err != nil {
+				return err
+			}
+			pc := domain.PatientCondition{
+				PatientID:   patient.ID,
+				ConditionID: d.ID,
+				Diagnostic:  d.Diagnostic,
+			}
+			if err := tx.Create(&pc).Error; err != nil {
+				return err
+			}
+		}
+
+		// Insert Emergency Contact
+		if patient.EmergencyContact != nil {
+			if err := tx.Save(patient.EmergencyContact).Error; err != nil {
+				return err
+			}
+			pc := domain.PatientContact{
+				PatientID:    patient.ID,
+				ContactID:    patient.EmergencyContact.ID,
+				Relationship: patient.EmergencyContact.Relationship,
+			}
+			if err := tx.Create(&pc).Error; err != nil {
+				return err
+			}
+		}
+
 		cache.AppCache.Delete("patient:ALL")
 		return nil
 	})
@@ -140,6 +183,55 @@ func (r *patientRepository) Update(ctx context.Context, patient *domain.Patient)
 				AssignedDate: time.Now(),
 			}
 			if err := tx.Create(&pw).Error; err != nil {
+				return err
+			}
+		}
+
+		// Update Medical Conditions
+		if err := tx.Where("patient_id = ?", patient.ID).Delete(&domain.PatientCondition{}).Error; err != nil {
+			return err
+		}
+		for _, a := range patient.Allergies {
+			if err := tx.Save(&a).Error; err != nil {
+				return err
+			}
+			pc := domain.PatientCondition{
+				PatientID:   patient.ID,
+				ConditionID: a.ID,
+				Diagnostic:  a.Diagnostic,
+			}
+			if err := tx.Create(&pc).Error; err != nil {
+				return err
+			}
+		}
+		for _, d := range patient.Diseases {
+			if err := tx.Save(&d).Error; err != nil {
+				return err
+			}
+			pc := domain.PatientCondition{
+				PatientID:   patient.ID,
+				ConditionID: d.ID,
+				Diagnostic:  d.Diagnostic,
+			}
+			if err := tx.Create(&pc).Error; err != nil {
+				return err
+			}
+		}
+
+		// Update Emergency Contact
+		if err := tx.Where("patient_id = ?", patient.ID).Delete(&domain.PatientContact{}).Error; err != nil {
+			return err
+		}
+		if patient.EmergencyContact != nil {
+			if err := tx.Save(patient.EmergencyContact).Error; err != nil {
+				return err
+			}
+			pc := domain.PatientContact{
+				PatientID:    patient.ID,
+				ContactID:    patient.EmergencyContact.ID,
+				Relationship: patient.EmergencyContact.Relationship,
+			}
+			if err := tx.Create(&pc).Error; err != nil {
 				return err
 			}
 		}
