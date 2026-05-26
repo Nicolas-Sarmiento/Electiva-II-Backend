@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"encoding/json"
 	"time"
 )
 
@@ -19,7 +20,7 @@ type EmergencyContact struct {
 	ID           string `gorm:"primaryKey;type:varchar(50)" json:"idContact"`
 	FirstName    string `gorm:"type:varchar(50)" json:"firstName" validate:"required,min=2"`
 	LastName     string `gorm:"type:varchar(50)" json:"lastName" validate:"required,min=2"`
-	Phone        string `gorm:"type:varchar(50)" json:"phone" validate:"required,numeric,min=7"`
+	Phone        string `gorm:"type:varchar(50)" json:"phone" validate:"required"`
 	Mail         string `gorm:"type:varchar(50)" json:"mail" validate:"required,email"`
 	Relationship string `gorm:"-" json:"relationship,omitempty" validate:"required"` // Viene en el JSON unido de PatientContact
 }
@@ -30,8 +31,8 @@ type PatientContact struct {
 	ContactID    string `gorm:"primaryKey;type:varchar(50)" json:"-"`
 	Relationship string `gorm:"type:varchar(50)" json:"relationship"`
 
-	Patient          Patient          `gorm:"foreignKey:PatientID;references:ID" json:"-"`
-	EmergencyContact EmergencyContact `gorm:"foreignKey:ContactID;references:ID" json:"-"`
+	Patient          Patient          `gorm:"foreignKey:PatientID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"-"`
+	EmergencyContact EmergencyContact `gorm:"foreignKey:ContactID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"-"`
 }
 
 // PatientCondition - Relación Paciente-Enfermedad
@@ -40,8 +41,8 @@ type PatientCondition struct {
 	ConditionID string `gorm:"primaryKey;type:varchar(50)" json:"-"`
 	Diagnostic  string `gorm:"type:text" json:"diagnostics"`
 
-	Patient          Patient          `gorm:"foreignKey:PatientID;references:ID" json:"-"`
-	MedicalCondition MedicalCondition `gorm:"foreignKey:ConditionID;references:ID" json:"-"`
+	Patient          Patient          `gorm:"foreignKey:PatientID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"-"`
+	MedicalCondition MedicalCondition `gorm:"foreignKey:ConditionID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"-"`
 }
 
 // Room - Habitación
@@ -54,10 +55,30 @@ type Room struct {
 
 // Wearable - Dispositivo Wearable (Device)
 type Wearable struct {
-	ID           string `gorm:"primaryKey;type:varchar(50)" json:"wearableId"`
-	MacAddress   string `gorm:"type:varchar(20);unique" json:"macAddress" validate:"required,mac"`
-	BatteryLevel int    `json:"batteryLevel" validate:"min=0,max=100"`
-	IsActive     bool   `json:"isActive"`
+	ID             string  `gorm:"primaryKey;type:varchar(50)" json:"wearableId"`
+	MacAddress     string  `gorm:"type:varchar(20);unique" json:"macAddress" validate:"required,mac"`
+	BatteryLevel   int     `json:"batteryLevel" validate:"min=0,max=100"`
+	BatteryVoltage float64 `json:"batteryVoltage"`
+	IsCharging     bool    `json:"isCharging"`
+	IsActive       bool    `json:"isActive"`
+}
+
+func (w *Wearable) UnmarshalJSON(data []byte) error {
+	// Intenta decodificar como string (ej: "uuid-device")
+	var id string
+	if err := json.Unmarshal(data, &id); err == nil {
+		w.ID = id
+		return nil
+	}
+
+	// Si no es string, decodifica como struct original usando un alias
+	type Alias Wearable
+	var aux Alias
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	*w = Wearable(aux)
+	return nil
 }
 
 // PatientWearable - Asignación
@@ -66,7 +87,7 @@ type PatientWearable struct {
 	WearableID   string    `gorm:"primaryKey;type:varchar(50)" json:"-"`
 	AssignedDate time.Time `gorm:"type:timestamp" json:"-"`
 
-	Wearable Wearable `gorm:"foreignKey:WearableID;references:ID" json:"-"`
+	Wearable Wearable `gorm:"foreignKey:WearableID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"-"`
 }
 
 // Patient - Paciente
@@ -77,10 +98,10 @@ type Patient struct {
 	DateOfBirth time.Time `gorm:"type:timestamp" json:"dateOfBirth" validate:"required"`
 	RoomID      string    `gorm:"type:varchar(50)" json:"RoomId,omitempty" validate:"required"` // Para el payload de Creación
 
-	Room              *Room              `gorm:"foreignKey:RoomID;references:ID" json:"Room,omitempty"`
-	PatientConditions []PatientCondition `gorm:"foreignKey:PatientID" json:"-"`
-	PatientContacts   []PatientContact   `gorm:"foreignKey:PatientID" json:"-"`
-	PatientWearables  []PatientWearable  `gorm:"foreignKey:PatientID" json:"-"`
+	Room              *Room              `gorm:"foreignKey:RoomID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"Room,omitempty"`
+	PatientConditions []PatientCondition `gorm:"foreignKey:PatientID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"-"`
+	PatientContacts   []PatientContact   `gorm:"foreignKey:PatientID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"-"`
+	PatientWearables  []PatientWearable  `gorm:"foreignKey:PatientID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"-"`
 
 	// Para coincidir con el payload exacto esperado (estos campos pueden poblarse manualmente)
 	Allergies        []MedicalCondition `gorm:"-" json:"Allergies"`
@@ -99,14 +120,15 @@ type AlertType struct {
 // Alert - Alerta
 type Alert struct {
 	ID          string     `gorm:"primaryKey;type:varchar(50)" json:"alertId"`
-	PatientID   string     `gorm:"type:varchar(50);index" json:"patientId"`
-	WearableID  string     `gorm:"type:varchar(50);index" json:"wearableId"`
+	PatientID   string     `gorm:"type:varchar(50) REFERENCES patients(id) ON DELETE CASCADE;index" json:"patientId"`
+	WearableID  string     `gorm:"type:varchar(50) REFERENCES wearables(id) ON DELETE CASCADE;index" json:"wearableId"`
 	ResolvedAt  *time.Time `gorm:"type:timestamp" json:"resolvedAt,omitempty"`
 	CreatedAt   time.Time  `gorm:"type:timestamp" json:"createdAt,omitempty"`
 	AlertStatus string     `gorm:"type:varchar(30)" json:"alertStatus"`
 	AlertLevel  string     `gorm:"type:varchar(30)" json:"alertLevel"`
-	AlertTypeID string     `gorm:"type:varchar(50)" json:"alertType"` // PDF usa alertType en lugar de alertTypeId
-	//NurseID     string     `gorm:"type:varchar(50);index" json:"nurseId"`
+	AlertType   string     `gorm:"type:varchar(50) REFERENCES alert_types(id) ON DELETE CASCADE" json:"alertType"` // PDF usa alertType en lugar de alertTypeId
+	BPM         int        `gorm:"type:integer" json:"bpm,omitempty"`
+	AlertCode   string     `gorm:"type:varchar(50)" json:"alertCode,omitempty"`
 }
 
 // Shift - Turno de trabajo recurrente

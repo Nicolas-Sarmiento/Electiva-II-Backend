@@ -1,29 +1,58 @@
-version: '3.8'
-
 services:
-  # PostgreSQL Database
-  db:
+  # PostgreSQL Database - Tenant A 
+  db-tenant-a:
     image: postgres:15-alpine
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: password
       POSTGRES_DB: ancianato
+      TZ: America/Bogota
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
 
-  # Keycloak for Identity Access Management
-  keycloak:
-    image: quay.io/keycloak/keycloak:24.0.0
-    command: start-dev
+  # PostgreSQL Database - Tenant B
+  db-tenant-b:
+    image: postgres:15-alpine
     environment:
-      KC_DB: postgres # Podría ser postgres y conectarlo a db db, pero start-dev usa H2 por defecto en memoria
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ancianato_b
+      TZ: America/Bogota
     ports:
-      - "8080:8080"
+      - "5433:5432"
+    volumes:
+      - pgdata_b:/var/lib/postgresql/data
+
+  # PostgreSQL Database - Tenant C
+  db-tenant-c:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ancianato_c
+      TZ: America/Bogota
+    ports:
+      - "5434:5432"
+    volumes:
+      - pgdata_c:/var/lib/postgresql/data
+
+
+
   
+  # MQTT Broker (Mosquitto) for IoT Wearables
+  mosquitto:
+    image: eclipse-mosquitto:2
+    environment:
+      TZ: America/Bogota
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+
   # Kafka using Kraft mode (no Zookeeper required)
   kafka:
     image: confluentinc/cp-kafka:7.4.0
@@ -55,3 +84,7 @@ services:
 
 volumes:
   pgdata:
+  pgdata_b:
+  pgdata_c:
+  mosquitto_data:
+  mosquitto_log:

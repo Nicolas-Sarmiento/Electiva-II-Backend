@@ -8,6 +8,7 @@ type AlertRepository interface {
 	GetAll(ctx context.Context) ([]Alert, error)
 	Update(ctx context.Context, alert *Alert) error
 	Delete(ctx context.Context, id string) error
+	HasActiveAlert(ctx context.Context, patientID string, alertType string) (bool, error)
 }
 
 type AlertUseCase interface {

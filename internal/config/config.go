@@ -20,14 +20,19 @@ type Config struct {
 	KeycloakRealm        string
 	KeycloakClientID     string
 	KeycloakClientSecret string
+	MQTTBroker           string
 }
 
 // LoadConfig lee las variables de entorno desde el archivo .env si existe, o desde OS env vars
 // Utiliza variables de entorno OS si existen, si no hace un fallback a `.env`, ideal para Prod.
 func LoadConfig() *Config {
-	err := godotenv.Load()
+	envFile := os.Getenv("ENV_FILE")
+	if envFile == "" {
+		envFile = ".env"
+	}
+	err := godotenv.Load(envFile)
 	if err != nil {
-		log.Println("No se encontró el archivo .env, se usarán las variables del sistema (Modo Prod)")
+		log.Printf("No se pudo cargar el archivo env '%s', se usarán las variables del sistema (Modo Prod)", envFile)
 	}
 
 	return &Config{
@@ -43,6 +48,7 @@ func LoadConfig() *Config {
 		KeycloakRealm:        getEnv("KEYCLOAK_REALM", "ancianato"),
 		KeycloakClientID:     getEnv("KEYCLOAK_CLIENT_ID", "backend-client"),
 		KeycloakClientSecret: getEnv("KEYCLOAK_CLIENT_SECRET", ""),
+		MQTTBroker:           getEnv("MQTT_BROKER", "tcp://localhost:1883"),
 	}
 }
 

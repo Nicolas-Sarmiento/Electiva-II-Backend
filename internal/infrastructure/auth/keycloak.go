@@ -72,8 +72,25 @@ func Login(username, password string) (string, error) {
 		return "", errors.New("access_token no encontrado")
 	}
 
+	// Verificar que el usuario pertenezca a este cliente (tenga roles asignados)
+	claims, err := ParseClaims(token)
+	if err != nil {
+		return "", fmt.Errorf("error al verificar claims del token: %v", err)
+	}
+
+	clientAccess, hasClientAccess := claims.ResourceAccess[keycloakCfg.ClientID]
+	if !hasClientAccess || len(clientAccess.Roles) == 0 {
+		return "", errors.New("el usuario no tiene roles en este cliente.")
+	}
+
 	return token, nil
 }
+
+// GetClientID devuelve el ID del cliente configurado
+func GetClientID() string {
+	return keycloakCfg.ClientID
+}
+
 
 // CustomClaims de JWT para sacar roles facilmente
 type CustomClaims struct {

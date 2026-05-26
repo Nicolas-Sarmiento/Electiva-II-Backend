@@ -37,6 +37,10 @@ func (m *AlertRepositoryMock) Update(ctx context.Context, alert *domain.Alert) e
 func (m *AlertRepositoryMock) Delete(ctx context.Context, id string) error {
 	return m.Called(ctx, id).Error(0)
 }
+func (m *AlertRepositoryMock) HasActiveAlert(ctx context.Context, patientID string, alertType string) (bool, error) {
+	args := m.Called(ctx, patientID, alertType)
+	return args.Bool(0), args.Error(1)
+}
 
 func TestCreateAlert_Success(t *testing.T) {
 	alertRepo := new(AlertRepositoryMock)
@@ -49,7 +53,7 @@ func TestCreateAlert_Success(t *testing.T) {
 	alert := &domain.Alert{
 		PatientID:   "patient-1",
 		WearableID:  "wearable-1",
-		AlertTypeID: "type-1",
+		AlertType: "type-1",
 		AlertStatus: "ACTIVE",
 		AlertLevel:  "HIGH",
 	}
@@ -83,7 +87,7 @@ func TestCreateAlert_MissingPatient(t *testing.T) {
 	alert := &domain.Alert{
 		PatientID:   "missing-patient",
 		WearableID:  "wearable-1",
-		AlertTypeID: "type-1",
+		AlertType: "type-1",
 		AlertStatus: "ACTIVE",
 		AlertLevel:  "HIGH",
 	}

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"ancianato-backend/internal/domain"
@@ -38,8 +39,28 @@ func (r *deviceRepository) GetByID(ctx context.Context, id string) (*domain.Wear
 }
 
 func (r *deviceRepository) GetByMacAddress(ctx context.Context, mac string) (*domain.Wearable, error) {
+	// Normalizar: quitar dos puntos y guiones
+	cleanMac := strings.ReplaceAll(strings.ReplaceAll(mac, ":", ""), "-", "")
+	
+	// Crear versión con dos puntos
+	var colonMac string
+	if len(cleanMac) == 12 {
+		var parts []string
+		for i := 0; i < 12; i += 2 {
+			parts = append(parts, cleanMac[i:i+2])
+		}
+		colonMac = strings.Join(parts, ":")
+	} else {
+		colonMac = cleanMac
+	}
+
 	var device domain.Wearable
-	err := r.db.WithContext(ctx).First(&device, "mac_address = ?", mac).Error
+	err := r.db.WithContext(ctx).Where(
+		"LOWER(mac_address) = LOWER(?) OR LOWER(mac_address) = LOWER(?)", 
+		cleanMac, 
+		colonMac,
+	).First(&device).Error
+	
 	if err != nil {
 		return nil, err
 	}

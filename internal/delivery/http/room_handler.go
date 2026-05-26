@@ -17,7 +17,7 @@ func NewRoomHandler(r chi.Router, useCase domain.RoomUseCase) {
 		roomUseCase: useCase,
 	}
 
-	r.Route("/rooms", func(r chi.Router) {
+	r.Route("/room", func(r chi.Router) {
 		r.Post("/", handler.Create)
 		r.Get("/", handler.GetAll)
 		r.Get("/{id}", handler.GetByID)
@@ -41,7 +41,7 @@ func (h *RoomHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(room)
+	json.NewEncoder(w).Encode((map[string]string{"message": "habitación creada", "roomId": room.ID}))
 }
 
 func (h *RoomHandler) GetAll(w http.ResponseWriter, r *http.Request) {
@@ -79,7 +79,7 @@ func (h *RoomHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(room)
+	json.NewEncoder(w).Encode((map[string]string{"message": "habitación actualizada", "roomId": room.ID}))
 }
 
 func (h *RoomHandler) Delete(w http.ResponseWriter, r *http.Request) {

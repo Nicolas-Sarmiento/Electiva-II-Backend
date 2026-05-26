@@ -17,7 +17,7 @@ func NewAlertTypeHandler(r chi.Router, useCase domain.AlertTypeUseCase) {
 		alertTypeUseCase: useCase,
 	}
 
-	r.Route("/alert-types", func(r chi.Router) {
+	r.Route("/alert-type", func(r chi.Router) {
 		r.Post("/", handler.Create)
 		r.Get("/", handler.GetAll)
 		r.Get("/{id}", handler.GetByID)
@@ -41,7 +41,7 @@ func (h *AlertTypeHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(alertType)
+	json.NewEncoder(w).Encode((map[string]string{"message": "tipo de alerta creada", "alertTypeId": alertType.ID}))
 }
 
 func (h *AlertTypeHandler) GetAll(w http.ResponseWriter, r *http.Request) {
@@ -79,7 +79,7 @@ func (h *AlertTypeHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(alertType)
+	json.NewEncoder(w).Encode((map[string]string{"message": "tipo de alerta actualizada", "alertTypeId": alertType.ID}))
 }
 
 func (h *AlertTypeHandler) Delete(w http.ResponseWriter, r *http.Request) {

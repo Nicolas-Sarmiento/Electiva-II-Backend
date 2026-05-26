@@ -160,6 +160,9 @@ func TestCreatePatient_Success(t *testing.T) {
 	// Predecir la búsqueda del wearable
 	deviceRepo.On("GetByID", mock.Anything, "wearable-1").Return(&domain.Wearable{ID: "wearable-1"}, nil)
 
+	// Predecir validación de uniques (GetAll pacientes)
+	patientRepo.On("GetAll", mock.Anything).Return([]domain.Patient{}, nil)
+
 	// Esperamos que llame al guardado sin error
 	patientRepo.On("Create", mock.Anything, patient).Return(nil)
 

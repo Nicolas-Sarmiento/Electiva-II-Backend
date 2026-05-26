@@ -52,8 +52,8 @@ func (u *alertUseCase) CreateAlert(ctx context.Context, alert *domain.Alert) err
 	}
 
 	// 4. Validar que el tipo de alerta existe
-	if _, err := u.alertTypeRepo.GetByID(ctx, alert.AlertTypeID); err != nil {
-		return errors.New("el tipo de alerta con ID '" + alert.AlertTypeID + "' no existe")
+	if _, err := u.alertTypeRepo.GetByID(ctx, alert.AlertType); err != nil {
+		return errors.New("el tipo de alerta con ID '" + alert.AlertType + "' no existe")
 	}
 
 	// 5. Asignar UUID y timestamp

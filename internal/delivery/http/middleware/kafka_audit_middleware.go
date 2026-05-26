@@ -62,6 +62,12 @@ func determineTopic(r *http.Request, statusCode int) string {
 // KafkaAuditMiddleware intercepta cada petición y envía un evento a Kafka
 func KafkaAuditMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Bypassear el responseRecorder para solicitudes WebSocket para permitir hijacking/upgrade
+		if strings.ToLower(r.Header.Get("Upgrade")) == "websocket" {
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		rec := &responseRecorder{
 			ResponseWriter: w,
 			statusCode:     http.StatusOK,

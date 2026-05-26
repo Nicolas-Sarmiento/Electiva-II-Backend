@@ -17,7 +17,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		parts := strings.Split(authHeader, " ")
+		parts := strings.Fields(authHeader)
 		if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
 			http.Error(w, "Formato Authorization inválido. Usa 'Bearer <token>'", http.StatusUnauthorized)
 			return
@@ -35,9 +35,15 @@ func AuthMiddleware(next http.Handler) http.Handler {
 
 		var allRoles []string
 		allRoles = append(allRoles, claims.RealmAccess.Roles...)
-		for _, clientRoles := range claims.ResourceAccess {
-			allRoles = append(allRoles, clientRoles.Roles...)
+
+		clientID := auth.GetClientID()
+		clientRoles, ok := claims.ResourceAccess[clientID]
+		if !ok || len(clientRoles.Roles) == 0 {
+			http.Error(w, "Acceso denegado: el usuario no pertenece a este cliente", http.StatusForbidden)
+			return
 		}
+		
+		allRoles = append(allRoles, clientRoles.Roles...)
 
 		ctx = context.WithValue(ctx, "roles", allRoles)
 

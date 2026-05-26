@@ -74,3 +74,11 @@ func (r *alertRepository) Delete(ctx context.Context, id string) error {
 	}
 	return err
 }
+
+func (r *alertRepository) HasActiveAlert(ctx context.Context, patientID string, alertType string) (bool, error) {
+	var count int64
+	err := r.db.WithContext(ctx).Model(&domain.Alert{}).
+		Where("patient_id = ? AND alert_type = ? AND alert_status IN (?, ?)", patientID, alertType, "Activa", "En Revisión").
+		Count(&count).Error
+	return count > 0, err
+}

@@ -20,7 +20,7 @@ func NewPatientHandler(r chi.Router, useCase domain.PatientUseCase) {
 	}
 
 	// Agrupación de rutas
-	r.Route("/patients", func(r chi.Router) {
+	r.Route("/patient", func(r chi.Router) {
 		r.Post("/", handler.Create)
 		r.Get("/", handler.GetAll)
 		r.Get("/{id}", handler.GetByID)

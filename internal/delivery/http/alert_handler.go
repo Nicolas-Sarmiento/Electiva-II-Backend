@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"ancianato-backend/internal/domain"
+	ws "ancianato-backend/internal/infrastructure/websocket"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -46,6 +47,17 @@ func (h *AlertHandler) Create(w http.ResponseWriter, r *http.Request) {
 		"createdAt": alert.CreatedAt,
 		"Message":   "Alerta creada exitosamente",
 	})
+
+	// Notificar a los clientes WebSocket en tiempo real
+	ws.Broadcast("new_alert", map[string]interface{}{
+		"alertId":     alert.ID,
+		"patientId":   alert.PatientID,
+		"wearableId":  alert.WearableID,
+		"alertType":   alert.AlertType,
+		"alertLevel":  alert.AlertLevel,
+		"alertStatus": alert.AlertStatus,
+		"createdAt":   alert.CreatedAt,
+	})
 }
 
 func (h *AlertHandler) GetAll(w http.ResponseWriter, r *http.Request) {
@@ -83,11 +95,28 @@ func (h *AlertHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Obtener la alerta actualizada para el broadcast
+	updatedAlert, _ := h.alertUseCase.GetAlert(r.Context(), id)
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{
 		"alertId": alert.ID,
 		"Message": "Alerta actualizada",
 	})
+
+	// Notificar a los clientes WebSocket del cambio de estado
+	if updatedAlert != nil {
+		ws.Broadcast("alert_updated", map[string]interface{}{
+			"alertId":     updatedAlert.ID,
+			"patientId":   updatedAlert.PatientID,
+			"wearableId":  updatedAlert.WearableID,
+			"alertType":   updatedAlert.AlertType,
+			"alertLevel":  updatedAlert.AlertLevel,
+			"alertStatus": updatedAlert.AlertStatus,
+			"createdAt":   updatedAlert.CreatedAt,
+			"resolvedAt":  updatedAlert.ResolvedAt,
+		})
+	}
 }
 
 func (h *AlertHandler) Delete(w http.ResponseWriter, r *http.Request) {
@@ -101,5 +130,10 @@ func (h *AlertHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{
 		"Message": "Alerta eliminada exitosamente",
+	})
+
+	// Notificar eliminación
+	ws.Broadcast("alert_deleted", map[string]interface{}{
+		"alertId": id,
 	})
 }
